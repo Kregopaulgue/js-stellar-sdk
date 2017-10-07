@@ -15,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/stellar/js-stellar-sdk.git"
+    "url": "https://github.com/Kregopaulgue/js-stellar-sdk.git"
   },
   "engines": {
     "node": ">=0.10 <=4"
@@ -23,9 +23,9 @@
   "author": "Stellar Development Foundation <hello@stellar.org>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/stellar/js-stellar-sdk/issues"
+    "url": "https://github.com/Kregopaulgue/js-stellar-sdk/issues"
   },
-  "homepage": "https://github.com/stellar/js-stellar-sdk",
+  "homepage": "https://github.com/Kregopaulgue/js-stellar-sdk",
   "devDependencies": {
     "babel": "~5.8.23",
     "babel-core": "~5.8.25",
@@ -83,7 +83,7 @@
     "event-source-polyfill": "0.0.7",
     "eventsource": "^0.2.1",
     "lodash": "^4.0.1",
-    "stellar-base": "^0.7.4",
+    "stellar-base": "https://github.com/Kregopaulgue/js-stellar-base/tree/my_changes.git#b826c22c129bc1d1682e2db4f4c264889f1628ec",
     "toml": "^2.3.0"
   }
 }
