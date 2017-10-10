@@ -15,10 +15,22 @@ describe("integration tests", function () {
 
   //create ids for making signers access
   var randomSignerId = StellarSdk.Keypair.random().publicKey();
+  var firstSignerId = StellarSdk.Keypair.random().publicKey();
+  var secondSignerId = StellarSdk.Keypair.random().publicKey();
 
-  var tempSigner = {
+  var signerToAdd = {
       ed25519PublicKey: randomSignerId,
       weight: 50
+  };
+
+  var firstSigner = {
+      ed25519PublicKey: firstSignerId,
+      weight: 10
+  };
+
+  var secondSigner = {
+      ed25519PublicKey: secondSignerId,
+      weight: 10
   };
 
   before(function(done) {
@@ -74,6 +86,26 @@ describe("integration tests", function () {
           });
   }
 
+  function addTwoSourceSignersToAccessGiver(firstSigner, secondSigner) {
+      return server.loadAccount(accessGiver.publicKey())
+          .then(source => {
+              let tx = new StellarSdk.TransactionBuilder(source)
+                  .addOperation(StellarSdk.Operation.setOptions({
+                      signer: firstSigner,
+                      source: accessGiver.publicKey()
+                  }))
+                  .addOperation(StellarSdk.Operation.setOptions({
+                      signer: secondSigner,
+                      source: accessGiver.publicKey()
+                  }))
+                  .build();
+
+              tx.sign(accessGiver);
+
+              return server.submitTransaction(tx);
+          });
+  }
+
   function setSigners(signerToAdd) {
       return server.loadAccount(accessTaker.publicKey())
           .then(source => {
@@ -83,7 +115,7 @@ describe("integration tests", function () {
               let tx = new StellarSdk.TransactionBuilder(source)
                   .addOperation(StellarSdk.Operation.setSigners({
                       accessGiverId: accessGiver.publicKey(),
-                      signer: tempSigner,
+                      signer: signerToAdd,
                       source: accessTaker.publicKey()
                   }))
                   .build();
@@ -123,6 +155,14 @@ describe("integration tests", function () {
             .catch(err => console.log(err));
     });
 
+    it("submits a new transaction with adding two default signers", function (done) {
+        addTwoSourceSignersToAccessGiver(firstSigner, secondSigner)
+            .then(result => {
+                done();
+            })
+            .catch(err => console.log(err));
+    });
+
     it("submits a new transaction with giving signers access", function (done) {
         giveNewSignersAccess(accessTaker.publicKey())
             .then(result => {
@@ -132,7 +172,7 @@ describe("integration tests", function () {
     });
 
     it("submits a new transaction with setting signer", function (done) {
-        setSigners(tempSigner)
+        setSigners(signerToAdd)
             .then(result => {
                 done();
             })
