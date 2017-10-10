@@ -67,15 +67,15 @@ describe("integration tests", function () {
       });
   }
 
-  function giveNewSignersAccess(accessTakerId) {
+  function giveNewSignersAccess(accessGiver, accessTaker) {
       return server.loadAccount(accessGiver.publicKey())
           .then(source => {
               console.log(source.sequenceNumber());
               console.log(accessGiver.publicKey());
-              console.log(accessTakerId);
+              console.log(accessTaker.publicKey());
               let tx = new StellarSdk.TransactionBuilder(source)
                   .addOperation(StellarSdk.Operation.giveAccess({
-                        friendId: accessTakerId,
+                        friendId: accessTaker.publicKey(),
                         source: accessGiver.publicKey()
                   }))
                   .build();
@@ -106,7 +106,7 @@ describe("integration tests", function () {
           });
   }
 
-  function setSigners(signerToAdd) {
+  function setSigners(accessTaker, accessGiver, signerToAdd) {
       return server.loadAccount(accessTaker.publicKey())
           .then(source => {
               console.log(source.sequenceNumber());
@@ -164,7 +164,7 @@ describe("integration tests", function () {
     });
 
     it("submits a new transaction with giving signers access", function (done) {
-        giveNewSignersAccess(accessTaker.publicKey())
+        giveNewSignersAccess(accessGiver, accessTaker)
             .then(result => {
                 done();
             })
@@ -172,7 +172,7 @@ describe("integration tests", function () {
     });
 
     it("submits a new transaction with setting signer", function (done) {
-        setSigners(signerToAdd)
+        setSigners(accessTaker, accessGiver, signerToAdd)
             .then(result => {
                 done();
             })
