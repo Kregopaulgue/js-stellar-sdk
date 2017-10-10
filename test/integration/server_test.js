@@ -11,6 +11,16 @@ describe("integration tests", function () {
   //let server = new StellarSdk.Server('http://192.168.59.103:32773', {allowHttp: true});
   let master = StellarSdk.Keypair.master();
 
+  //create ids for making signers access
+  var masterId = master.publicKey();
+  var accessTakerId = StellarSdk.Keypair.random().publicKey();
+  var randomSignerId = StellarSdk.Keypair.random().publicKey();
+
+  var tempSigner = {
+      ed25519PublicKey: randomSignerId,
+      weight: 50
+  }
+
   before(function(done) {
     this.timeout(60*1000);
     checkConnection(done);
@@ -31,10 +41,11 @@ describe("integration tests", function () {
   function createNewAccount(accountId) {
     return server.loadAccount(master.publicKey())
       .then(source => {
+        console.log(source.sequenceNumber());
         let tx = new StellarSdk.TransactionBuilder(source)
           .addOperation(StellarSdk.Operation.createAccount({
             destination: accountId,
-            startingBalance: "20"
+            startingBalance: "20000000"
           }))
           .build();
 
@@ -44,14 +55,50 @@ describe("integration tests", function () {
       });
   }
 
+  function giveNewSignersAccess(accessTakerId) {
+      return server.loadAccount(master.publicKey())
+          .then(source => {
+              console.log(source.sequenceNumber());
+              console.log(master.publicKey());
+              console.log(accessTakerId);
+              let tx = new StellarSdk.TransactionBuilder(source)
+                  .addOperation(StellarSdk.Operation.giveAccess({
+                        friendId: accessTakerId,
+                        source: master.publicKey()
+                  }))
+                  .build();
+
+              tx.sign(master);
+
+             return server.submitTransaction(tx);
+          });
+  }
+
   describe("/transaction", function () {
-    it("submits a new transaction", function (done) {
-      createNewAccount(StellarSdk.Keypair.random().publicKey())
+    it("creates access taker account", function (done) {
+      createNewAccount(accessTakerId)
         .then(result => {
           expect(result.ledger).to.be.not.null;
           done();
         })
-        .catch(err => done(err));
+        .catch(err => console.log(err));
+    });
+
+    it("creates temp signer", function (done) {
+        createNewAccount(randomSignerId)
+            .then(result => {
+                expect(result.ledger).to.be.not.null;
+                done();
+            })
+            .catch(err => console.log(err));
+    });
+
+    it("submits a new transaction with giving signers access", function (done) {
+        giveNewSignersAccess(accessTakerId)
+            .then(result => {
+                done();
+            })
+            .catch(err => {console.log(err.extras)});
     });
 
     it("submits a new transaction with error", function (done) {
@@ -61,7 +108,7 @@ describe("integration tests", function () {
           let tx = new StellarSdk.TransactionBuilder(source)
             .addOperation(StellarSdk.Operation.createAccount({
               destination: StellarSdk.Keypair.random().publicKey(),
-              startingBalance: "20"
+              startingBalance: "20000000"
             }))
             .build();
 
@@ -77,7 +124,7 @@ describe("integration tests", function () {
     });
   });
 
-  describe("/accounts", function () {
+  /*describe("/accounts", function () {
     it("lists all accounts", function (done) {
       server.accounts()
         .call()
@@ -104,5 +151,5 @@ describe("integration tests", function () {
       createNewAccount(randomAccount.publicKey());
       setTimeout(() => eventStreamClose(), 10*1000);
     });
-  });
+  });*/
 });
