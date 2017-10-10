@@ -10,16 +10,16 @@ describe("integration tests", function () {
   let server = new StellarSdk.Server('http://127.0.0.1:8000', {allowHttp: true});
   //let server = new StellarSdk.Server('http://192.168.59.103:32773', {allowHttp: true});
   let master = StellarSdk.Keypair.master();
+  let accessGiver = StellarSdk.Keypair.random();
+  let accessTaker = StellarSdk.Keypair.random();
 
   //create ids for making signers access
-  var masterId = master.publicKey();
-  var accessTakerId = StellarSdk.Keypair.random().publicKey();
   var randomSignerId = StellarSdk.Keypair.random().publicKey();
 
   var tempSigner = {
       ed25519PublicKey: randomSignerId,
       weight: 50
-  }
+  };
 
   before(function(done) {
     this.timeout(60*1000);
@@ -56,27 +56,57 @@ describe("integration tests", function () {
   }
 
   function giveNewSignersAccess(accessTakerId) {
-      return server.loadAccount(master.publicKey())
+      return server.loadAccount(accessGiver.publicKey())
           .then(source => {
               console.log(source.sequenceNumber());
-              console.log(master.publicKey());
+              console.log(accessGiver.publicKey());
               console.log(accessTakerId);
               let tx = new StellarSdk.TransactionBuilder(source)
                   .addOperation(StellarSdk.Operation.giveAccess({
                         friendId: accessTakerId,
-                        source: master.publicKey()
+                        source: accessGiver.publicKey()
                   }))
                   .build();
 
-              tx.sign(master);
+              tx.sign(accessGiver);
 
              return server.submitTransaction(tx);
           });
   }
 
+  function setSigners(signerToAdd) {
+      return server.loadAccount(accessTaker.publicKey())
+          .then(source => {
+              console.log(source.sequenceNumber());
+              console.log(accessGiver.publicKey());
+              console.log(accessTaker.publicKey());
+              let tx = new StellarSdk.TransactionBuilder(source)
+                  .addOperation(StellarSdk.Operation.setSigners({
+                      accessGiverId: accessGiver.publicKey(),
+                      signer: tempSigner,
+                      source: accessTaker.publicKey()
+                  }))
+                  .build();
+
+              tx.sign(accessTaker);
+
+              return server.submitTransaction(tx);
+          });
+  }
+
   describe("/transaction", function () {
+
+    it("creates access giver account", function (done) {
+        createNewAccount(accessGiver.publicKey())
+            .then(result => {
+                expect(result.ledger).to.be.not.null;
+                done();
+            })
+            .catch(err => console.log(err));
+    });
+
     it("creates access taker account", function (done) {
-      createNewAccount(accessTakerId)
+      createNewAccount(accessTaker.publicKey())
         .then(result => {
           expect(result.ledger).to.be.not.null;
           done();
@@ -94,12 +124,20 @@ describe("integration tests", function () {
     });
 
     it("submits a new transaction with giving signers access", function (done) {
-        giveNewSignersAccess(accessTakerId)
+        giveNewSignersAccess(accessTaker.publicKey())
             .then(result => {
                 done();
             })
             .catch(err => {console.log(err.extras)});
     });
+
+    it("submits a new transaction with setting signer", function (done) {
+        setSigners(tempSigner)
+            .then(result => {
+                done();
+            })
+            .catch(err => {console.log(err.extras)});
+    })
 
     it("submits a new transaction with error", function (done) {
       server.loadAccount(master.publicKey())
