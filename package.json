@@ -83,7 +83,7 @@
     "event-source-polyfill": "0.0.7",
     "eventsource": "^0.2.1",
     "lodash": "^4.0.1",
-    "stellar-base": "https://github.com/Kregopaulgue/js-stellar-base.git#2cb4f77ac416ab2fe7ceb1397bc0b845423f61fa",
+    "stellar-base": "https://github.com/Kregopaulgue/js-stellar-base.git#eaa79ab6e39b475cb4283f523da11b5197859463",
     "toml": "^2.3.0"
   }
 }
