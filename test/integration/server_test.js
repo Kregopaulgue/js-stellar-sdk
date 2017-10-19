@@ -10,6 +10,12 @@ describe("integration tests", function () {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    async function demo() {
+        console.log('Taking a break...');
+        await sleep(20000);
+        console.log('Two second later');
+    }
+
     // Docker
     let server = new StellarSdk.Server('http://127.0.0.1:8000', {allowHttp: true});
     //let server = new StellarSdk.Server('http://192.168.59.103:32773', {allowHttp: true});
@@ -21,7 +27,6 @@ describe("integration tests", function () {
     var randomSignerId = StellarSdk.Keypair.random().publicKey();
     var firstSignerId = StellarSdk.Keypair.random().publicKey();
     var secondSignerId = StellarSdk.Keypair.random().publicKey();
-    var dateFrames = new Date(Date.now() + 20000);
 
 
     var signerToAdd = {
@@ -73,7 +78,7 @@ describe("integration tests", function () {
             });
     }
 
-    function giveNewSignersAccess(accessGiver, accessTaker) {
+    function giveNewSignersAccess(accessGiver, accessTaker, dateFrames) {
         return server.loadAccount(accessGiver.publicKey())
             .then(source => {
                 console.log(source.sequenceNumber());
@@ -172,8 +177,10 @@ describe("integration tests", function () {
         });
 
         it("submits a new transaction with giving signers access", function (done) {
-            giveNewSignersAccess(accessGiver, accessTaker)
+            var dateFrames = new Date(Date.now() + 50);
+            giveNewSignersAccess(accessGiver, accessTaker, dateFrames)
                 .then(result => {
+                    console.log(result);
                     done();
                 })
                 .catch(err => {console.log(err.extras)});
@@ -182,6 +189,7 @@ describe("integration tests", function () {
         it("submits a new transaction with setting signer", function (done) {
             setSigners(accessTaker, accessGiver, signerToAdd)
                 .then(result => {
+                    console.log(result);
                     done();
                 })
                 .catch(err => {console.log(err.extras)});
