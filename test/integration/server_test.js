@@ -177,7 +177,13 @@ describe("integration tests", function () {
         });
 
         it("submits a new transaction with giving signers access", function (done) {
-            var dateFrames = new Date(Date.now() + 50);
+
+            //set miliseconds 5 * 1000 if you want
+            //giving signers access to success
+            //but setting signer to fail
+
+            var milisecondsSinceEpoch = 20 * 1000;
+            var dateFrames = new Date(Date.now() + milisecondsSinceEpoch);
             giveNewSignersAccess(accessGiver, accessTaker, dateFrames)
                 .then(result => {
                     console.log(result);
